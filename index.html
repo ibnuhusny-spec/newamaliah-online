@@ -40,6 +40,9 @@
             animation: twinkle 2s infinite ease-in-out;
         }
         @keyframes twinkle { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
+        
+        /* Disabled State Styles */
+        .disabled-card { opacity: 0.7; pointer-events: none; filter: grayscale(0.2); }
     </style>
 </head>
 <body>
@@ -105,6 +108,7 @@
             ZoomIn: (p) => <Icon name="ZoomIn" {...p} />
         };
 
+        // --- DZIKIR LENGKAP (42 ITEM) ---
         const DAFTAR_DOA = [
             { judul: "1. Zikir Ketika Bangun Tidur", arab: "الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ", latin: "Alhamdu lillahil-ladzi ahyana ba'da ma amatana wa ilaihin-nushur.", arti: "Segala puji bagi Allah yang menghidupkan kami kembali setelah mematikan kami dan kepada-Nya (kami) akan dibangkitkan." },
             { judul: "2. Doa Memakai Pakaian", arab: "الْحَمْدُ لِلَّهِ الَّذِي كَسَانِي هَذَا (الثَّوْبَ) وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ", latin: "Alhamdulillahilladzi kasaani hadza (ats-tsauba) wa razaqanihi min ghairi haulin minni wa laa quwwatin.", arti: "Segala puji bagi Allah yang telah memakaikan pakaian ini kepadaku dan mengaruniakannya kepadaku tanpa daya dan kekuatan dariku." },
@@ -166,14 +170,13 @@
                     img.src = e.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        // INCREASED RESOLUTION FOR BETTER READABILITY (Handwriting)
                         const MAX_WIDTH = 600; 
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = (scaleSize < 1) ? MAX_WIDTH : img.width;
                         canvas.height = (scaleSize < 1) ? (img.height * scaleSize) : img.height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Quality 0.6
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
                     }
                 }
             });
@@ -337,7 +340,7 @@
                         <div className="space-y-3">
                             <button onClick={() => setRole('student')} className="w-full bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-transform active:scale-95 shadow-lg border-b-4 border-yellow-600"><Icons.User size={24} /> Masuk sebagai Murid</button>
                         </div>
-                        <div className="mt-8 pt-4 border-t border-white/10"><p className="text-[10px] text-emerald-200/60">Versi Final 7.2 (Evaluasi Checklist)</p></div>
+                        <div className="mt-8 pt-4 border-t border-white/10"><p className="text-[10px] text-emerald-200/60">Versi Final 7.3 (Lightbox Fix)</p></div>
                     </div>
 
                     {/* PIN PROMPT */}
@@ -504,11 +507,20 @@
                         </div>
                     </div>
                     
-                    {/* LIGHTBOX MODAL */}
+                    {/* LIGHTBOX MODAL (TEACHER) - IMPROVED CLOSE BUTTON */}
                     {previewImage && (
-                        <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setPreviewImage(null)}>
-                            <button className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 p-2 rounded-full"><Icons.XIcon size={24}/></button>
-                            <img src={previewImage} className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" onClick={(e) => e.stopPropagation()}/>
+                        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in" onClick={() => setPreviewImage(null)}>
+                            {/* Tombol Tutup Atas */}
+                            <button onClick={() => setPreviewImage(null)} className="absolute top-8 right-6 text-white bg-red-600/80 p-3 rounded-full hover:bg-red-600 shadow-lg z-[101]">
+                                <Icons.XIcon size={28}/>
+                            </button>
+                            
+                            <img src={previewImage} className="max-w-full max-h-[80vh] rounded-lg shadow-2xl object-contain mb-4" onClick={(e) => e.stopPropagation()}/>
+                            
+                            {/* Tombol Tutup Bawah (Helper) */}
+                            <button onClick={() => setPreviewImage(null)} className="bg-white text-slate-900 px-6 py-3 rounded-full font-bold shadow-lg z-[101]">
+                                Tutup Gambar
+                            </button>
                         </div>
                     )}
 
@@ -636,14 +648,7 @@
                 if (dayData.puasaPenuh) score += 20; else if (dayData.puasaSetengah) score += 10;
                 if (dayData.subuh) score += 10; if (dayData.zuhur) score += 10; if (dayData.ashar) score += 10; if (dayData.maghrib) score += 10; if (dayData.isya) score += 10; 
                 if (dayData.tarawih) score += 10; if (dayData.witir) score += 10; if (dayData.tadarus) score += 10; if (dayData.salatMalam) { score += (dayIndex >= 21) ? 20 : 10; } if (dayData.bantuIbu) score += 5; if (dayData.kosakata) score += 5; if (dayData.amalanLainCheck) score += 5; if (dayData.hafalDoa) score += 10; if (dayData.namaPenceramah) score += 5; if (dayData.temaCeramah) score += 10; 
-                
-                // EVALUASI DIRI (MINUS POINTS)
-                if (dayData.eval_game) score -= 20;
-                if (dayData.eval_tidur) score -= 20;
-                if (dayData.eval_nangis) score -= 20;
-                if (dayData.eval_batal) score -= 20;
-                if (dayData.eval_lain) score -= 20;
-
+                if (dayData.halKurangBaik && dayData.halKurangBaik.trim().length > 0) { score -= 25; }
                 return Math.max(0, score); 
             };
             
@@ -660,17 +665,7 @@
 
             const sendData = async () => { if(!studentProfile.scriptUrl) return alert("Link Script Guru belum diisi! Hubungi gurumu."); if(view === 'hafalan' && (!audioBlob || !namaSurah)) return alert("Rekam & isi nama surah dulu!"); setIsSubmitting(true); try { const dayData = userData[activeDay] || {}; let payload = {}; if(view === 'hafalan') { const b64Audio = await blobToBase64(audioBlob); payload = { action: 'lapor', nama: studentProfile.name, kelas: studentProfile.class, hari: activeDay, poin: 0, puasa: dayData.puasaPenuh, tarawih: dayData.tarawih, kebaikan: `🎤 Hafalan: ${namaSurah}`, audio: b64Audio, namaSurah: namaSurah }; } else if(view === 'achievements') { payload = { action: 'lapor', nama: studentProfile.name, kelas: studentProfile.class, hari: activeDay, poin: 0, puasa: dayData.puasaPenuh, tarawih: dayData.tarawih, kebaikan: `📸 Foto: ${selectedImage || 'Kegiatan'}`, foto: base64Image, namaFoto: selectedImage }; } else { 
                 let rincian = []; if(dayData.salatMalam) rincian.push("✅ Qiyam"); if(dayData.bantuIbu) rincian.push("✅ Bantu Ortu"); if(dayData.kosakata) rincian.push("✅ Kosakata"); if(dayData.amalanLainCheck) rincian.push(`✅ ${dayData.amalanLain || 'Amalan Lain'}`); if(dayData.tarawih) rincian.push("✅ Tarawih"); if(dayData.witir) rincian.push("✅ Witir"); if(dayData.tadarus) rincian.push("✅ Tadarus"); 
-                
-                // Rincian Evaluasi
-                let evaluasi = [];
-                if(dayData.eval_game) evaluasi.push("Main Game");
-                if(dayData.eval_tidur) evaluasi.push("Tidur");
-                if(dayData.eval_nangis) evaluasi.push("Menangis");
-                if(dayData.eval_batal) evaluasi.push("Batal Puasa");
-                if(dayData.eval_lain) evaluasi.push(dayData.eval_lain_teks || "Lainnya");
-                
-                if(evaluasi.length > 0) rincian.push(`⚠️ Evaluasi: ${evaluasi.join(", ")}`);
-                
+                if(dayData.halKurangBaik) rincian.push(`⚠️ Evaluasi: ${dayData.halKurangBaik}`);
                 payload = { action: 'lapor', nama: studentProfile.name, kelas: studentProfile.class, hari: activeDay, poin: calculateDailyScore(dayData, activeDay), puasa: dayData.puasaPenuh, tarawih: dayData.tarawih, kebaikan: rincian.join(", "), foto: "-", audio: "-" }; } await fetch(studentProfile.scriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) }); triggerConfetti(); alert("Terkirim! Guru akan segera menerima datamu."); 
                 
                 // SAVE PERSISTENT LOCK TO LOCAL STORAGE
@@ -729,16 +724,12 @@
                             {userData[activeDay]?.validated && <div className="bg-green-100 text-green-700 p-2 rounded-lg text-xs font-bold text-center border border-green-200">✅ Data sudah divalidasi</div>}
                             {isJournalSubmitted && <div className="bg-blue-100 text-blue-700 p-2 rounded-lg text-xs font-bold text-center border border-blue-200">🔒 Laporan Hari Ini Telah Dikirim</div>}
                             
+                            <div className={`night-sky rounded-2xl p-4 text-white shadow-lg mb-4 border border-indigo-900 ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><div className="star" style={{top: '10%', left: '20%', width: '2px', height: '2px'}}></div><div className="star" style={{top: '40%', left: '80%', width: '3px', height: '3px', animationDelay: '1s'}}></div><div className="flex justify-between items-center relative z-10"><div><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Moon size={18} className="text-yellow-300 fill-yellow-300"/> Salat Malam</h3><p className="text-[10px] text-indigo-200 opacity-80">Qiyamul Lail</p><div className="mt-2 inline-block bg-white/10 border border-white/20 px-2 py-1 rounded text-[10px] font-bold text-yellow-200">Nilai: {activeDay >= 21 ? '20 (Lailatul Qadar)' : '10'} Poin</div></div><button onClick={() => toggleCheck(activeDay, 'salatMalam')} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center transition-all ${userData[activeDay]?.salatMalam ? 'bg-yellow-400 border-yellow-200 text-indigo-900 shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'bg-transparent border-indigo-400/30 text-transparent hover:bg-white/5'}`} disabled={isJournalSubmitted}><Icons.CheckSquare size={24} strokeWidth={4} /></button></div></div>
                             <div className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1"><Icons.Sun size={12}/> Puasa Hari Ini</h3><div className="flex gap-2"><button onClick={() => togglePuasa('penuh')} disabled={isJournalSubmitted} className={`flex-1 py-3 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition ${userData[activeDay]?.puasaPenuh ? 'bg-orange-50 border-orange-500' : 'bg-white border-slate-100'}`}><Icons.Sun size={20} className={userData[activeDay]?.puasaPenuh ? "text-orange-500" : "text-slate-300"} /><span className="text-xs font-bold mt-1 text-slate-700">Penuh (20)</span></button><button onClick={() => togglePuasa('setengah')} disabled={isJournalSubmitted} className={`flex-1 py-3 px-2 rounded-xl border-2 flex flex-col items-center justify-center transition ${userData[activeDay]?.puasaSetengah ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-100'}`}><Icons.CloudSun size={20} className={userData[activeDay]?.puasaSetengah ? "text-blue-500" : "text-slate-300"} /><span className="text-xs font-bold mt-1 text-slate-700">Setengah (10)</span></button></div></div>
                             <div className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-200 ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Shalat Wajib (+10)</h3><div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">{['Subuh','Zuhur','Ashar','Maghrib','Isya'].map(s => (<button key={s} onClick={() => toggleCheck(activeDay, s.toLowerCase())} disabled={isJournalSubmitted} className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold border transition ${userData[activeDay]?.[s.toLowerCase()] ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-blue-300'}`}>{s}</button>))}</div></div>
                             <div className={`grid grid-cols-3 gap-3 ${isJournalSubmitted ? 'pointer-events-none' : ''}`}>{[{id: 'tarawih', label: 'Tarawih'}, {id: 'witir', label: 'Witir'}, {id: 'tadarus', label: 'Tadarus'}].map(ibadah => (<div key={ibadah.id} onClick={() => toggleCheck(activeDay, ibadah.id)} className={`p-3 rounded-xl border-2 text-center cursor-pointer transition shadow-sm flex flex-col items-center justify-center h-24 ${userData[activeDay]?.[ibadah.id] ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-indigo-50'}`}><div className={`mb-1 ${userData[activeDay]?.[ibadah.id] ? 'text-indigo-600' : 'text-slate-300'}`}>{ibadah.id === 'tadarus' ? <Icons.BookOpen size={24}/> : <Icons.Star size={24} className={userData[activeDay]?.[ibadah.id] ? 'fill-indigo-600' : ''}/>}</div><span className="text-[10px] font-bold text-slate-700">{ibadah.label}</span><span className="text-[9px] text-slate-400">+10</span></div>))}</div>
                             <div className={`bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3 ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><h3 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1"><Icons.Heart size={12}/> Amalan Harian (+5 Poin)</h3>{[{id: 'bantuIbu', label: 'Membantu Ayah/Ibu'}, {id: 'kosakata', label: 'Menghafal Kosakata'}].map(a => (<div key={a.id} onClick={() => toggleCheck(activeDay, a.id)} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition ${userData[activeDay]?.[a.id] ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-slate-200 hover:bg-white'}`}><span className="text-sm font-bold text-slate-700">{a.label}</span>{userData[activeDay]?.[a.id] && <Icons.CheckCircle size={18} className="text-emerald-500"/>}</div>))}<div className={`p-3 rounded-xl border transition ${userData[activeDay]?.amalanLainCheck ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-slate-200'}`}><div className="flex items-center gap-2 mb-2"><input type="checkbox" checked={!!userData[activeDay]?.amalanLainCheck} onChange={() => toggleCheck(activeDay, 'amalanLainCheck')} disabled={isJournalSubmitted} className="w-5 h-5 accent-emerald-600 rounded cursor-pointer" /><span className="text-sm font-bold text-slate-700">Amalan Lainnya</span></div><input type="text" placeholder="Tulis amalanmu..." disabled={isJournalSubmitted} className="w-full text-xs p-2 rounded border border-slate-200 bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" value={userData[activeDay]?.amalanLain || ''} onChange={(e) => updateField(activeDay, 'amalanLain', e.target.value)} /></div></div>
                             
-                            <div className={`bg-white p-4 rounded-2xl border border-slate-200 shadow-sm ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1"><Icons.Mic size={12}/> Jurnal Ceramah</h3><div className="space-y-3"><div><label className="text-[10px] text-slate-400 font-bold mb-1 block">Nama Penceramah (+5)</label><input type="text" disabled={isJournalSubmitted} className="w-full text-xs p-3 bg-slate-50 rounded-lg border border-slate-200 focus:border-blue-400 outline-none" placeholder="Contoh: Al-Ustaz Khidir bin Muh. Sunusi" value={userData[activeDay]?.namaPenceramah || ''} onChange={e => updateField(activeDay, 'namaPenceramah', e.target.value)} /></div><div><label className="text-[10px] text-slate-400 font-bold mb-1 block">Tema Ceramah (+10)</label><input type="text" disabled={isJournalSubmitted} className="w-full text-xs p-3 bg-slate-50 rounded-lg border border-slate-200 focus:border-blue-400 outline-none" placeholder="Isi tema ceramah..." value={userData[activeDay]?.temaCeramah || ''} onChange={e => updateField(activeDay, 'temaCeramah', e.target.value)} /></div></div></div>
-
-                            <div className={`night-sky rounded-2xl p-4 text-white shadow-lg mb-4 border border-indigo-900 ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><div className="star" style={{top: '10%', left: '20%', width: '2px', height: '2px'}}></div><div className="star" style={{top: '40%', left: '80%', width: '3px', height: '3px', animationDelay: '1s'}}></div><div className="flex justify-between items-center relative z-10"><div><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Moon size={18} className="text-yellow-300 fill-yellow-300"/> Salat Malam</h3><p className="text-[10px] text-indigo-200 opacity-80">Qiyamul Lail</p><div className="mt-2 inline-block bg-white/10 border border-white/20 px-2 py-1 rounded text-[10px] font-bold text-yellow-200">Nilai: {activeDay >= 21 ? '20 (Lailatul Qadar)' : '10'} Poin</div></div><button onClick={() => toggleCheck(activeDay, 'salatMalam')} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center transition-all ${userData[activeDay]?.salatMalam ? 'bg-yellow-400 border-yellow-200 text-indigo-900 shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'bg-transparent border-indigo-400/30 text-transparent hover:bg-white/5'}`} disabled={isJournalSubmitted}><Icons.CheckSquare size={24} strokeWidth={4} /></button></div></div>
-
-                            {/* EVALUASI DIRI (NEW CHECKLIST) */}
                             <div className={`bg-red-50 p-4 rounded-xl border border-red-200 shadow-sm space-y-3 ${isJournalSubmitted ? 'pointer-events-none opacity-80' : ''}`}>
                                 <h3 className="text-xs font-bold text-red-600 uppercase flex items-center gap-1"><Icons.AlertTriangle size={12}/> Evaluasi Harian (Minus Poin)</h3>
                                 {[
@@ -762,6 +753,8 @@
                                     <input type="text" placeholder="Tulis perilaku kurang baik..." className="w-full text-xs p-2 rounded border border-red-200 bg-white outline-none" value={userData[activeDay]?.eval_lain_teks || ''} onChange={(e) => updateField(activeDay, 'eval_lain_teks', e.target.value)} disabled={!userData[activeDay]?.eval_lain} />
                                 </div>
                             </div>
+                            
+                            <div className={`bg-white p-4 rounded-2xl border border-slate-200 shadow-sm ${isJournalSubmitted ? 'pointer-events-none' : ''}`}><h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1"><Icons.Mic size={12}/> Jurnal Ceramah</h3><div className="space-y-3"><div><label className="text-[10px] text-slate-400 font-bold mb-1 block">Nama Penceramah (+5)</label><input type="text" disabled={isJournalSubmitted} className="w-full text-xs p-3 bg-slate-50 rounded-lg border border-slate-200 focus:border-blue-400 outline-none" placeholder="Contoh: Al-Ustaz Khidir bin Muh. Sunusi" value={userData[activeDay]?.namaPenceramah || ''} onChange={e => updateField(activeDay, 'namaPenceramah', e.target.value)} /></div><div><label className="text-[10px] text-slate-400 font-bold mb-1 block">Tema Ceramah (+10)</label><input type="text" disabled={isJournalSubmitted} className="w-full text-xs p-3 bg-slate-50 rounded-lg border border-slate-200 focus:border-blue-400 outline-none" placeholder="Isi tema ceramah..." value={userData[activeDay]?.temaCeramah || ''} onChange={e => updateField(activeDay, 'temaCeramah', e.target.value)} /></div></div></div>
                             
                             <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 text-center shadow-sm mb-2">
                                 <button onClick={sendData} disabled={isSubmitting || isJournalSubmitted} className={`w-full text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 shadow-md ${isJournalSubmitted ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
@@ -824,11 +817,20 @@
                         </button></div>)}
                     </div>
                     
-                    {/* LIGHTBOX MODAL (STUDENT) */}
+                    {/* LIGHTBOX MODAL (STUDENT) - TOMBOL TUTUP DIPERBAIKI */}
                     {previewImage && (
-                        <div className="fixed inset-0 bg-black/95 z-[70] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setPreviewImage(null)}>
-                            <button className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 p-2 rounded-full"><Icons.XIcon size={24}/></button>
-                            <img src={previewImage} className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" onClick={(e) => e.stopPropagation()}/>
+                        <div className="fixed inset-0 bg-black/95 z-[70] flex flex-col items-center justify-center p-4 animate-in fade-in" onClick={() => setPreviewImage(null)}>
+                            {/* Tombol Tutup Atas */}
+                            <button onClick={() => setPreviewImage(null)} className="absolute top-8 right-6 text-white bg-red-600/80 p-3 rounded-full hover:bg-red-600 shadow-lg z-[101]">
+                                <Icons.XIcon size={28}/>
+                            </button>
+                            
+                            <img src={previewImage} className="max-w-full max-h-[80vh] rounded-lg shadow-2xl object-contain mb-4" onClick={(e) => e.stopPropagation()}/>
+                            
+                            {/* Tombol Tutup Bawah (Helper) */}
+                            <button onClick={() => setPreviewImage(null)} className="bg-white text-slate-900 px-6 py-3 rounded-full font-bold shadow-lg z-[101]">
+                                Tutup Gambar
+                            </button>
                         </div>
                     )}
 
