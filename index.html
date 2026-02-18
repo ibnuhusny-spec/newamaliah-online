@@ -170,13 +170,14 @@
                     img.src = e.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
+                        // INCREASED RESOLUTION FOR BETTER READABILITY (Handwriting)
                         const MAX_WIDTH = 600; 
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = (scaleSize < 1) ? MAX_WIDTH : img.width;
                         canvas.height = (scaleSize < 1) ? (img.height * scaleSize) : img.height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Quality 0.6
                     }
                 }
             });
@@ -302,6 +303,10 @@
             };
 
             const handleSave = () => {
+                if (tempScriptUrl && !tempScriptUrl.includes('/exec')) {
+                     alert("Link Script Salah! Link harus berakhiran '/exec'.\nSilakan buat Deployment Baru di Google Apps Script.");
+                     return;
+                }
                 onSaveSettings(tempSchoolName, tempScriptUrl, tempPin);
                 alert("Pengaturan tersimpan! Nama Sekolah & Link diperbarui.");
             };
@@ -340,7 +345,7 @@
                         <div className="space-y-3">
                             <button onClick={() => setRole('student')} className="w-full bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-transform active:scale-95 shadow-lg border-b-4 border-yellow-600"><Icons.User size={24} /> Masuk sebagai Murid</button>
                         </div>
-                        <div className="mt-8 pt-4 border-t border-white/10"><p className="text-[10px] text-emerald-200/60">Versi Final 7.4 (Layout Fix)</p></div>
+                        <div className="mt-8 pt-4 border-t border-white/10"><p className="text-[10px] text-emerald-200/60">Versi Final 9.0 (Multi-User Safe)</p></div>
                     </div>
 
                     {/* PIN PROMPT */}
@@ -533,7 +538,13 @@
         // --- TEACHER LOGIN ---
         function TeacherLogin({ setRole, scriptUrl, setScriptUrl, currentPin }) {
             const [pinInput, setPinInput] = useState('');
-            const handleLogin = () => { if (pinInput === currentPin) { if (!scriptUrl) return alert("Link Script kosong!"); setRole('teacher'); } else { alert('PIN Salah!'); } };
+            const handleLogin = () => { 
+                if (pinInput === currentPin) { 
+                    if (!scriptUrl) return alert("Link Script kosong!"); 
+                    if (!scriptUrl.includes('/exec')) return alert("Link Script salah! Harus berakhiran '/exec'.\nCek Deploy > New Deployment.");
+                    setRole('teacher'); 
+                } else { alert('PIN Salah!'); } 
+            };
             return (<div className="h-screen bg-slate-100 flex items-center justify-center p-6"><div className="bg-white p-6 rounded-3xl shadow-xl w-full text-center"><h2 className="text-xl font-bold text-slate-800 mb-6">Login Guru</h2><input type="password" value={pinInput} onChange={(e) => setPinInput(e.target.value)} className="w-full p-3 bg-slate-50 border rounded-xl text-center mb-6" placeholder="••••" /><div className="flex gap-2"><button onClick={() => setRole('home')} className="flex-1 py-3 bg-slate-200 rounded-xl">Batal</button><button onClick={handleLogin} className="flex-1 py-3 bg-emerald-600 text-white rounded-xl">Masuk</button></div></div></div>);
         }
 
@@ -576,12 +587,41 @@
             useEffect(() => { if (Object.keys(userData).length > 0) localStorage.setItem('ramadanJournalData', JSON.stringify(userData)); }, [userData]);
             useEffect(() => { localStorage.setItem('ramadanProfile', JSON.stringify(studentProfile)); }, [studentProfile]);
 
+            // ------------- FIX: USER-SPECIFIC STORAGE ----------------
+            // Generate Unique Storage Key based on Student Name (and School if needed, but name is usually enough in family context)
+            const getStorageKey = (name) => {
+                const cleanName = name ? name.trim().toLowerCase().replace(/\s+/g, '_') : 'guest';
+                return `ramadan_data_${cleanName}`;
+            };
+            
+            // LOAD Data when Student Name Changes
+            useEffect(() => {
+                if (studentProfile.name) {
+                    const key = getStorageKey(studentProfile.name);
+                    const saved = localStorage.getItem(key);
+                    if (saved) {
+                        setUserData(JSON.parse(saved));
+                    } else {
+                        // Init new empty data for this user
+                        const init = {}; 
+                        for(let i=1; i<=30; i++) { init[i] = { puasa: false, tarawih: false, validated: false }; }
+                        setUserData(init);
+                    }
+                }
+            }, [studentProfile.name]);
+
+            // SAVE Data to specific key when userData changes
+            useEffect(() => {
+                if (studentProfile.name && Object.keys(userData).length > 0) {
+                    const key = getStorageKey(studentProfile.name);
+                    localStorage.setItem(key, JSON.stringify(userData));
+                }
+            }, [userData, studentProfile.name]);
+            // ---------------------------------------------------------
+
             // CHECK SUBMISSIONS FOR CURRENT DAY (SERVER + LOCAL MERGE - PERSISTENT)
             const isJournalSubmitted = useMemo(() => {
-                // Check Persistent Local Flag (userData[day].submitted_journal)
                 if (userData[activeDay]?.submitted_journal) return true;
-                
-                // Fallback to Server Data Check
                 if (!raportData) return false;
                 const currentDayData = raportData.filter(d => parseInt(d.hari) === activeDay);
                 return currentDayData.some(d => (!d.audio || d.audio.length < 50) && (!d.foto || d.foto.length < 50));
